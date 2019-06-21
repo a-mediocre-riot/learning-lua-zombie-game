@@ -59,14 +59,15 @@ function love.load()
 	zombies = {};
 	bullets = {};
 
-	gameState = constants.GAME_STATE_MAIN_MENU;
-	maxTime = defaults.MAX_TIME;
-	timer = maxTime;
-	score = defaults.SCORE;
+	gm = {};
+	gm.state = constants.GAME_STATE_MAIN_MENU;
+	gm.maxTime = defaults.MAX_TIME;
+	gm.timer = maxTime;
+	gm.score = defaults.SCORE;
 end
 
 function love.update(dt)
-	if gameState == constants.GAME_STATE_RUNNING then
+	if gm.state == constants.GAME_STATE_RUNNING then
 		if love.keyboard.isDown(constants.keybinds.MOVE_DOWN) and player.y < love.graphics.getHeight() then
 			player.y = player.y + player.speed * dt;
 		end
@@ -92,7 +93,7 @@ function love.update(dt)
 			for i, z in ipairs(zombies) do
 				zombies[i] = nil;
 			end
-			gameState = constants.GAME_STATE_MAIN_MENU;
+			gm.state = constants.GAME_STATE_MAIN_MENU;
 			player.x = defaults.player.X;
 			player.y = defaults.player.Y;
 		end
@@ -116,7 +117,7 @@ function love.update(dt)
 			if distanceBetween(z.x, z.y, b.x, b.y) < (constants.ZOMBIE_HITBOX + constants.BULLET_HITBOX) then
 				-- Check to make sure we haven't had two collisions on the same zombie or bullet
 				if z.dead == false and b.dead == false then
-					score = score + z.value;
+					gm.score = gm.score + z.value;
 				end
 				z.dead = true;
 				b.dead = true;
@@ -140,12 +141,12 @@ function love.update(dt)
 		end
 	end
 
-	if gameState == constants.GAME_STATE_RUNNING then
-		timer = timer - dt;
-		if timer <= 0 then
+	if gm.state == constants.GAME_STATE_RUNNING then
+		gm.timer = gm.timer - dt;
+		if gm.timer <= 0 then
 			spawnZombie();
-			maxTime = maxTime * constants.ZOMBIE_TIME_DECREASE
-			timer = maxTime;
+			gm.maxTime = gm.maxTime * constants.ZOMBIE_TIME_DECREASE
+			gm.timer = gm.maxTime;
 		end
 	end
 end
@@ -154,11 +155,11 @@ function love.draw()
 	love.graphics.draw(sprites.background, 0, 0);
 	love.graphics.setFont(constants.FONT);
 
-	if gameState == constants.GAME_STATE_MAIN_MENU then
+	if gm.state == constants.GAME_STATE_MAIN_MENU then
 		love.graphics.printf("Click anywhere to begin!", 0, 50, love.graphics.getWidth(), "center");
 	end
 
-	love.graphics.printf("Score: " .. score, 0, love.graphics.getHeight() - 100, love.graphics.getWidth(), "center");
+	love.graphics.printf("Score: " .. gm.score, 0, love.graphics.getHeight() - 100, love.graphics.getWidth(), "center");
 
 	love.graphics.draw(sprites.player, player.x, player.y, playerMouseAngle(), nil, nil, player.offsetX, player.offsetY);
 
@@ -224,13 +225,14 @@ function spawnBullet()
 end
 
 function love.mousepressed(x, y, b, istouch)
-	if b == 1 and gameState == constants.GAME_STATE_RUNNING then
+	if b == 1 and gm.state == constants.GAME_STATE_RUNNING then
 		spawnBullet();
 	end
 
-	if gameState == constants.GAME_STATE_MAIN_MENU then
-		gameState = constants.GAME_STATE_RUNNING;
-		maxTime = defaults.MAX_TIME;
-		score = defaults.SCORE;
+	if gm.state == constants.GAME_STATE_MAIN_MENU then
+		gm.state = constants.GAME_STATE_RUNNING;
+		gm.maxTime = defaults.MAX_TIME;
+		gm.timer = gm.maxTime;
+		gm.score = defaults.SCORE;
 	end
 end
