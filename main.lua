@@ -43,6 +43,7 @@ function love.load()
 
 	defaults.zombie = {};
 	defaults.zombie.SPEED = 100;
+	defaults.zombie.VALUE = 1;
 
 	defaults.bullet = {};
 	defaults.bullet.SPEED = 500;
@@ -113,9 +114,12 @@ function love.update(dt)
 	for i,z in ipairs(zombies) do
 		for j,b in ipairs(bullets) do
 			if distanceBetween(z.x, z.y, b.x, b.y) < (constants.ZOMBIE_HITBOX + constants.BULLET_HITBOX) then
+				-- Check to make sure we haven't had two collisions on the same zombie or bullet
+				if z.dead == false and b.dead == false then
+					score = score + z.value;
+				end
 				z.dead = true;
 				b.dead = true;
-				score = score + 1;
 			end
 		end
 	end
@@ -185,6 +189,7 @@ function spawnZombie()
 	zombie.y = 0;
 	zombie.speed = defaults.zombie.SPEED;
 	zombie.dead = false;
+	zombie.value = defaults.zombie.VALUE;
 
 	local side = math.random(1, 4);
 	local zombieSize = constants.ZOMBIE_HITBOX * 2;
