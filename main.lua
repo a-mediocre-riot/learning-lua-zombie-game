@@ -13,16 +13,17 @@ function love.load()
 	constants.FONT_SIZE = 40;
 	constants.FONT = love.graphics.newFont(constants.FONT_SIZE);
 
+	constants.ZOMBIE_TIME_DECREASE = 0.95;
+
+	constants.PLAYER_HITBOX = 15;
+	constants.ZOMBIE_HITBOX = 15;
+	constants.BULLET_HITBOX = 5;
+
 	constants.keybinds = {};
 	constants.keybinds.MOVE_UP = "w";
 	constants.keybinds.MOVE_DOWN = "s";
 	constants.keybinds.MOVE_LEFT = "a";
 	constants.keybinds.MOVE_RIGHT = "d";
-
-	defaults = {};
-	defaults.PLAYER_X = love.graphics.getWidth() / 2;
-	defaults.PLAYER_Y = love.graphics.getHeight() / 2;
-	defaults.PLAYER_SPEED = 180;
 
 	sprites = {};
 	sprites.player = love.graphics.newImage("sprites/player.png");
@@ -30,20 +31,37 @@ function love.load()
 	sprites.zombie = love.graphics.newImage("sprites/zombie.png");
 	sprites.background = love.graphics.newImage("sprites/background.png");
 
+	defaults = {};
+
+	defaults.MAX_TIME = 2;
+	defaults.SCORE = 0;
+
+	defaults.player = {};
+	defaults.player.X = love.graphics.getWidth() / 2;
+	defaults.player.Y = love.graphics.getHeight() / 2;
+	defaults.player.SPEED = 180;
+
+	defaults.zombie = {};
+	defaults.zombie.SPEED = 100;
+
+	defaults.bullet = {};
+	defaults.bullet.SPEED = 500;
+	defaults.bullet.SCALE = 0.5;
+
 	player = {};
-	player.x = defaults.PLAYER_X;
-	player.y = defaults.PLAYER_Y;
+	player.x = defaults.player.X;
+	player.y = defaults.player.Y;
 	player.offsetX = sprites.player:getWidth() / 2;
 	player.offsetY = sprites.player:getHeight() / 2;
-	player.speed = defaults.PLAYER_SPEED;
+	player.speed = defaults.player.SPEED;
 
 	zombies = {};
 	bullets = {};
 
 	gameState = constants.GAME_STATE_MAIN_MENU;
-	maxTime = 2;
+	maxTime = defaults.MAX_TIME;
 	timer = maxTime;
-	score = 0;
+	score = defaults.SCORE;
 end
 
 function love.update(dt)
@@ -69,13 +87,13 @@ function love.update(dt)
 		z.x = z.x + math.cos(zombiePlayerAngle(z)) * z.speed * dt;
 		z.y = z.y + math.sin(zombiePlayerAngle(z)) * z.speed * dt;
 
-		if distanceBetween(z.x, z.y, player.x, player.y) < 30 then
+		if distanceBetween(z.x, z.y, player.x, player.y) < (constants.PLAYER_HITBOX + constants.ZOMBIE_HITBOX) then
 			for i, z in ipairs(zombies) do
 				zombies[i] = nil;
-				gameState = constants.GAME_STATE_MAIN_MENU;
-				player.x = love.graphics.getWidth() / 2;
-				player.y = love.graphics.getHeight() / 2;
 			end
+			gameState = constants.GAME_STATE_MAIN_MENU;
+			player.x = defaults.player.X;
+			player.y = defaults.player.Y;
 		end
 	end
 
@@ -94,7 +112,7 @@ function love.update(dt)
 
 	for i,z in ipairs(zombies) do
 		for j,b in ipairs(bullets) do
-			if distanceBetween(z.x, z.y, b.x, b.y) < 20 then
+			if distanceBetween(z.x, z.y, b.x, b.y) < (constants.ZOMBIE_HITBOX + constants.BULLET_HITBOX) then
 				z.dead = true;
 				b.dead = true;
 				score = score + 1;
@@ -122,7 +140,7 @@ function love.update(dt)
 		timer = timer - dt;
 		if timer <= 0 then
 			spawnZombie();
-			maxTime = maxTime * 0.95;
+			maxTime = maxTime * constants.ZOMBIE_TIME_DECREASE
 			timer = maxTime;
 		end
 	end
@@ -145,7 +163,7 @@ function love.draw()
 	end
 
 	for i, b in ipairs(bullets) do
-		love.graphics.draw(sprites.bullet, b.x, b.y, nil, 0.5, 0.5, sprites.bullet:getWidth()/2, sprites.bullet:getHeight()/2);
+		love.graphics.draw(sprites.bullet, b.x, b.y, nil, b.scale, b.scale, sprites.bullet:getWidth()/2, sprites.bullet:getHeight()/2);
 	end
 end
 
@@ -165,23 +183,24 @@ function spawnZombie()
 	zombie = {};
 	zombie.x = 0;
 	zombie.y = 0;
-	zombie.speed = 100;
+	zombie.speed = defaults.zombie.SPEED;
 	zombie.dead = false;
 
 	local side = math.random(1, 4);
+	local zombieSize = constants.ZOMBIE_HITBOX * 2;
 
 	if side == 1 then
-		zombie.x = -30;
+		zombie.x = zombieSize * -1;
 		zombie.y = math.random(0, love.graphics.getHeight());
 	elseif side == 2 then
 		zombie.x = math.random(0, love.graphics.getWidth());
-		zombie.y = -30;
+		zombie.y = zombieSize * -1;
 	elseif side == 3 then
-		zombie.x = love.graphics.getWidth() + 30;
+		zombie.x = love.graphics.getWidth() + zombieSize;
 		zombie.y = math.random(0, love.graphics.getHeight());
 	else
 		zombie.x = math.random(0, love.graphics.getWidth());
-		zombie.y = love.graphics.getHeight() + 30;
+		zombie.y = love.graphics.getHeight() + zombieSize;
 	end
 
 	table.insert(zombies, zombie);
@@ -191,9 +210,10 @@ function spawnBullet()
 	bullet = {};
 	bullet.x = player.x;
 	bullet.y = player.y;
-	bullet.speed = 500;
+	bullet.speed = defaults.bullet.SPEED;
 	bullet.direction = playerMouseAngle();
 	bullet.dead = false;
+	bullet.scale = defaults.bullet.SCALE;
 
 	table.insert(bullets, bullet);
 end
@@ -204,8 +224,8 @@ function love.mousepressed(x, y, b, istouch)
 	end
 
 	if gameState == constants.GAME_STATE_MAIN_MENU then
-		gameState = 2;
-		maxTime = 2;
-		score = 0;
+		gameState = constants.GAME_STATE_RUNNING;
+		maxTime = defaults.MAX_TIME;
+		score = defaults.SCORE;
 	end
 end
