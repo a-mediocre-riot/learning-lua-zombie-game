@@ -198,12 +198,6 @@ function spawnBullet()
 	table.insert(bullets, bullet);
 end
 
-function love.keypressed(key, scancode, isrepeat)
-	if key == "space" then
-		spawnZombie();
-	end
-end
-
 function love.mousepressed(x, y, b, istouch)
 	if b == 1 and gameState == constants.GAME_STATE_RUNNING then
 		spawnBullet();
