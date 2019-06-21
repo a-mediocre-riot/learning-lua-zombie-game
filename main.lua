@@ -1,14 +1,28 @@
+--[[
+Button Clicking Game
+Created for "Lua Programming and Game Development with LOVE" course on Udemy.
+Additional features and improvements made by Gina Ribniscky.
+
+Udemy Course: https://www.udemy.com/lua-love/
+]]
+
 function love.load()
+	constants = {};
+	constants.GAME_STATE_MAIN_MENU = 1;
+	constants.GAME_STATE_RUNNING = 2;
+	constants.FONT_SIZE = 40;
+	constants.FONT = love.graphics.newFont(constants.FONT_SIZE);
+
+	constants.keybinds = {};
+	constants.keybinds.MOVE_UP = "w";
+	constants.keybinds.MOVE_DOWN = "s";
+	constants.keybinds.MOVE_LEFT = "a";
+	constants.keybinds.MOVE_RIGHT = "d";
+
 	defaults = {};
 	defaults.PLAYER_X = love.graphics.getWidth() / 2;
 	defaults.PLAYER_Y = love.graphics.getHeight() / 2;
 	defaults.PLAYER_SPEED = 180;
-
-	keybinds = {};
-	keybinds.MOVE_UP = "w";
-	keybinds.MOVE_DOWN = "s";
-	keybinds.MOVE_LEFT = "a";
-	keybinds.MOVE_RIGHT = "d";
 
 	sprites = {};
 	sprites.player = love.graphics.newImage("sprites/player.png");
@@ -26,29 +40,27 @@ function love.load()
 	zombies = {};
 	bullets = {};
 
-	gameState = 1;
+	gameState = constants.GAME_STATE_MAIN_MENU;
 	maxTime = 2;
 	timer = maxTime;
 	score = 0;
-
-	myFont = love.graphics.newFont(40);
 end
 
 function love.update(dt)
-	if gameState == 2 then
-		if love.keyboard.isDown(keybinds.MOVE_DOWN) and player.y < love.graphics.getHeight() then
+	if gameState == constants.GAME_STATE_RUNNING then
+		if love.keyboard.isDown(constants.keybinds.MOVE_DOWN) and player.y < love.graphics.getHeight() then
 			player.y = player.y + player.speed * dt;
 		end
 
-		if love.keyboard.isDown(keybinds.MOVE_UP) and player.y > 0 then
+		if love.keyboard.isDown(constants.keybinds.MOVE_UP) and player.y > 0 then
 			player.y = player.y - player.speed * dt;
 		end
 
-		if love.keyboard.isDown(keybinds.MOVE_LEFT) and player.x > 0 then
+		if love.keyboard.isDown(constants.keybinds.MOVE_LEFT) and player.x > 0 then
 			player.x = player.x - player.speed * dt;
 		end
 
-		if love.keyboard.isDown(keybinds.MOVE_RIGHT) and player.x < love.graphics.getWidth() then
+		if love.keyboard.isDown(constants.keybinds.MOVE_RIGHT) and player.x < love.graphics.getWidth() then
 			player.x = player.x + player.speed * dt;
 		end
 	end
@@ -60,7 +72,7 @@ function love.update(dt)
 		if distanceBetween(z.x, z.y, player.x, player.y) < 30 then
 			for i, z in ipairs(zombies) do
 				zombies[i] = nil;
-				gameState = 1;
+				gameState = constants.GAME_STATE_MAIN_MENU;
 				player.x = love.graphics.getWidth() / 2;
 				player.y = love.graphics.getHeight() / 2;
 			end
@@ -106,7 +118,7 @@ function love.update(dt)
 		end
 	end
 
-	if gameState == 2 then
+	if gameState == constants.GAME_STATE_RUNNING then
 		timer = timer - dt;
 		if timer <= 0 then
 			spawnZombie();
@@ -118,9 +130,9 @@ end
 
 function love.draw()
 	love.graphics.draw(sprites.background, 0, 0);
-	love.graphics.setFont(myFont);
+	love.graphics.setFont(constants.FONT);
 
-	if gameState == 1 then
+	if gameState == constants.GAME_STATE_MAIN_MENU then
 		love.graphics.printf("Click anywhere to begin!", 0, 50, love.graphics.getWidth(), "center");
 	end
 
@@ -193,11 +205,11 @@ function love.keypressed(key, scancode, isrepeat)
 end
 
 function love.mousepressed(x, y, b, istouch)
-	if b == 1 and gameState == 2 then
+	if b == 1 and gameState == constants.GAME_STATE_RUNNING then
 		spawnBullet();
 	end
 
-	if gameState == 1 then
+	if gameState == constants.GAME_STATE_MAIN_MENU then
 		gameState = 2;
 		maxTime = 2;
 		score = 0;
